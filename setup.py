@@ -31,7 +31,7 @@ setup(
     name='vis',
     version=find_version("vis", "version.py"),
     description='Simple Visualization Tools',
-    url='https://github.com/jam31118',
+    url='https://github.com/jam31118/vis',
     author='sahn',
     author_email='jam31118@gmail.com',
     classifiers=[
