@@ -8,7 +8,7 @@ from matplotlib.animation import TimedAnimation
 
 from sys import stdout
 
-from ntype import is_real_number
+from .ntype import is_real_number
 
 
 def augment_polar_mesh_for_colormesh(r_values, theta_values):

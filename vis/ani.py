@@ -1,9 +1,9 @@
 import numpy as np
 from matplotlib.animation import TimedAnimation
 
-from ntype import is_real_number, is_integer_valued_real
-from plot import plot_2D
-from indicator import Progress_Bar
+from .ntype import is_real_number, is_integer_valued_real
+from .plot import plot_2D
+from .indicator import Progress_Bar
 
 
 from matplotlib.animation import FFMpegWriter
