@@ -161,7 +161,8 @@ def get_ylim(data):
 
 
 def plot_1D(x, y, *input_plot_args, fig=None, ax=None, xlabel='', ylabel='', xlim=None, ylim=None, title='',
-            figsize=None, mathtext_fontset='stix', font_size_scale=2.0, ax_color=None, **input_plot_kwargs):
+            figsize=None, mathtext_fontset='stix', font_size_scale=2.0, ax_color=None, 
+            log_scale=False, **input_plot_kwargs):
 
     ## Process input arguments
     #
@@ -171,9 +172,14 @@ def plot_1D(x, y, *input_plot_args, fig=None, ax=None, xlabel='', ylabel='', xli
     try: y = np.array(y)
     except: raise Exception("'y' should be plottable object")
 
+    try:
+        x = np.array(x)
+        y = np.array(y)
+    except:
+        raise Exception("'x' and 'y' should be convertable to numpy.ndarray")
     for arg in [x, y]:
         assert type(arg) is np.ndarray
-        assert arg.ndim == 1
+        assert arg.ndim <= 1
     #if hasattr(x, 'shape') and hasattr(y, 'shape'):
     assert x.shape == y.shape
     #
@@ -189,6 +195,8 @@ def plot_1D(x, y, *input_plot_args, fig=None, ax=None, xlabel='', ylabel='', xli
     assert type(mathtext_fontset) is str
     #
     if ax_color is not None: assert is_color_like(ax_color)
+    #
+    assert type(log_scale) is bool
 
     ## Set appropriate fontsize system (e.g. 'medium', 'large', 'x-large' etc.)
     set_global_fontsize_from_fig(fig, font_size_scale)
@@ -201,7 +209,7 @@ def plot_1D(x, y, *input_plot_args, fig=None, ax=None, xlabel='', ylabel='', xli
 
     ## Determine xlim
     if xlim is None:
-        if x.size != 0:
+        if (x.size != 0) and (x.ndim != 0):
             xlim = (x.min(), x.max())
         else:
             xlim = (None, None)
@@ -213,8 +221,12 @@ def plot_1D(x, y, *input_plot_args, fig=None, ax=None, xlabel='', ylabel='', xli
 
     # values in 'ax_plot_kwargs' will be overided by 'input_plot_kwargs' if there's any collision
     plot_kwargs = {**ax_plot_kwargs, **input_plot_kwargs}
-
-    line, = ax.plot(x, y, *input_plot_args, **plot_kwargs)
+    
+    #print('x',x,'y',y)
+    
+    line = None
+    if log_scale: line, = ax.semilogy(x,y, *input_plot_args, **plot_kwargs)
+    else: line, = ax.plot(x, y, *input_plot_args, **plot_kwargs)
 
     ax.set_ylim(*ylim)
     ax.tick_params(axis='y', labelsize='x-large', colors=ax_color)
@@ -229,7 +241,7 @@ def plot_1D(x, y, *input_plot_args, fig=None, ax=None, xlabel='', ylabel='', xli
 
 
 
-def plot_2D(X_mesh, Y_mesh, C=None, fig=None, ax=None, x_label='', y_label='', color_label='',
+def plot_2D(X_mesh, Y_mesh, C=None, fig=None, ax=None, xlabel='', ylabel='', color_label='',
             xlim=None, ylim=None, vmin=None, vmax=None, log_scale=False, linthresh=None, linscale=None,
             title='', pcolormesh_kwargs={}, figsize=None):
 
@@ -340,8 +352,10 @@ def plot_2D(X_mesh, Y_mesh, C=None, fig=None, ax=None, x_label='', y_label='', c
     ax.set_ylim(*ylim)
 
     ax.set_title(title, fontsize='xx-large')
-    ax.set_xlabel(x_label, fontsize='xx-large')
-    ax.set_ylabel(y_label, fontsize='xx-large')
+    ax.set_xlabel(xlabel, fontsize='xx-large')
+    ax.set_ylabel(ylabel, fontsize='xx-large')
     cb.set_label(color_label, fontsize='xx-large', rotation=270, va='bottom')
 
     return fig, ax, pcm
+
+
