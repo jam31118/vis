@@ -11,6 +11,14 @@ from sys import stdout
 from .ntype import is_real_number
 
 
+#### TO IMPLEMENT ####
+## Method doesn't necessarily require figure option as an input arugment
+## .. since the Figure object can be acquired from given Axes object as one of the attribute.
+
+## Check if given Axes is in the given (if given) Figure object's axes attribute
+
+
+
 def augment_polar_mesh_for_colormesh(r_values, theta_values):
     """
     Returns polar mesh for matplotlib.pyplot.pcolormesh() in polar coordinates.
@@ -71,13 +79,16 @@ def set_global_fontsize_from_fig(fig, scale=1.5):
 
 
 def is_axes(obj):
-    return axes._base._AxesBase in type(obj).mro()
+    return isinstance(obj, axes._base._AxesBase)
+    #return axes._base._AxesBase in type(obj).mro()
 
 def is_figure(obj):
-    return Figure in type(obj).mro()
+    return isinstance(obj, Figure)
+    #return Figure in type(obj).mro()
 
 def is_norm(obj):
-    return Normalize in type(obj).mro()
+    return isinstance(obj, Normalize)
+    #return Normalize in type(obj).mro()
 
 
 def process_fig_and_ax_argument(fig, ax, default_figsize=None):
@@ -112,6 +123,13 @@ def check_limit_argument(arg):
 def get_ylim(data):
     mid_lower_percentile = 1
     mid_upper_percentile = 99
+
+    p_000 = data.min()
+    p_001 = np.percentile(data,mid_lower_percentile)
+    p_099 = np.percentile(data,mid_upper_percentile)
+    p_100 = data.max()
+
+    ## Set width of each percentile spacing
 
     p_000 = data.min()
     p_001 = np.percentile(data,mid_lower_percentile)
@@ -156,6 +174,62 @@ def get_ylim(data):
     else: y_max = p_100 + 0.1 * from_001_to_099
 
     return y_min, y_max
+
+
+
+def get_square_axes_limits(coords, margin=0.05):
+    """Return N-dimensional square's limits
+    
+    ## Arguments
+    # 'coords': list of coordinates of poins to be plotted
+    # 'margin': margin to be added from boundaries of the square.
+    - 'margin' can be negative if one wants to reduce the square size.
+    
+    ## Example
+    if 'coords' was given as [x,y,z],
+    
+    then the resulting square's limits are given by:
+    
+    (xlim, ylim, zlim)
+    
+    where,
+    
+    xlim == (x_mid - max_width, x_mid + max_width)
+    ylim == (y_mid - max_width, y_mid + max_width)
+    zlim == (z_mid - max_width, z_mid + max_width)
+    
+    x_mid = 0.5 * (min(x) + max(x)) (and so on)
+    
+    max_width = max([x_width, y_width, z_width])
+    
+    where x_width = 0.5 * (max(x) - min(x)) (and so on)
+    """
+    #coords = [x,y,z]
+    lims = [(coord.min(), coord.max()) for coord in coords]
+    mids = [0.5 * (lim[0] + lim[1]) for lim in lims]
+    widths = [0.5 * (lim[1] - lim[0]) for lim in lims]
+    max_width = max(widths)
+    max_width += max_width * margin
+    ax_lims = tuple((mid - max_width, mid + max_width) for mid in mids)
+    #xlim, ylim, zlim = ax_lims
+    return ax_lims
+
+
+
+def check_fig_and_ax(fig=None, ax=None, fig_kwargs={}, ax_kwargs={}):
+    for arg in [fig_kwargs, ax_kwargs]: assert type(arg) is dict
+    if ax is not None:
+        assert is_axes(ax)
+        if fig is not None: 
+            assert is_figure(fig)
+            assert ax in fig.axes
+        else: fig = ax.figure
+    else:
+        if fig is not None: assert len(fig.axes) == 0
+        else: fig = plt.figure(**fig_kwargs)
+        ax = fig.gca(**ax_kwargs)
+    
+    return fig, ax
 
 
 
@@ -309,13 +383,6 @@ def plot_2D(X_mesh, Y_mesh, C=None, fig=None, ax=None, xlabel='', ylabel='', col
                 if vmin_given != norm.vmin:
                     raise Exception("given norm's vmin and given vmin are different.")
         if norm.vmax is None: norm.vmax = vmax
-        else:
-            if vmax_given is not None:
-                if vmax_given != norm.vmax:
-                    raise Exception("given norm's vmax and given vmax are different.")
-    elif log_scale:
-        if vmin > 0:
-            norm = LogNorm(vmin=vmin, vmax=vmax)
         else:
             # Set 'linscale' argument
             if linscale is None: linscale = 1.0

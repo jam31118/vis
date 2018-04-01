@@ -1,15 +1,22 @@
+#### TO DO ####
+## Implement 2D and 3D version of Animate_Trajectory and Animate_Trajectory_Tail as a single class
+# It is for managing code easily etc.
+
+
+
+
 from shutil import which
 
 import numpy as np
 from matplotlib.animation import TimedAnimation, FFMpegWriter
 from matplotlib import rcParams
+from mpl_toolkits.mplot3d import Axes3D
 
 from .ntype import is_real_number, is_integer_valued_real
 from .plot import plot_1D, plot_2D
-from .plot import is_figure, is_axes
+from .plot import is_figure, is_axes, check_fig_and_ax
 from .indicator import Progress_Bar
 from .layout import get_text_alignment, get_text_position_in_ax_coord
-
 
 ## [NOTE] One need to know whether one is inside of the IPython
 from IPython.display import HTML
@@ -317,6 +324,90 @@ class Animate_Trajectory_2D_Tail(Animate_Trajectory_2D):
 
 
 
+
+class Animate_Trajectory_3D(Animate_Base):
+    def __init__(self, func, frames, func_args=(), func_kwargs={}, fig=None, ax=None, show_progress=True, fig_kwargs={}, **plot_kwargs):
+
+        assert type(fig_kwargs) is dict
+        self.fig_kwargs = fig_kwargs
+        assert type(func_args) is tuple
+        self.func_args = func_args
+        assert type(func_kwargs) is dict
+        self.func_kwargs = func_kwargs
+        assert callable(func)
+        self.func = func
+        assert type(show_progress) is bool
+        self.show_progress = show_progress
+        
+        self.plot_dimension = 3
+
+        self.fig, self.ax = check_fig_and_ax(fig=fig, ax=ax, fig_kwargs=self.fig_kwargs, ax_kwargs={'projection':'3d'})
+        
+        self.frames = process_frames_argument(frames)
+        self.num_of_frames = len(self.frames)
+        
+        #self.traj_data = np.empty((self.num_of_frames, self.plot_dimension), dtype=float)
+
+        self.plot_kwargs = plot_kwargs
+        
+        #self.fig, self.ax, self.line = plot_1D([],[], **self.plot_kwargs)
+
+        super().__init__(self.fig, blit=True)
+
+    def _init_draw(self):
+        blank_coord = [[] for i in range(self.plot_dimension)]
+        self.line, = self.ax.plot(*blank_coord, **self.plot_kwargs)
+        if self.show_progress:
+            self.progress_bar = Progress_Bar(self.num_of_frames)
+            self.current_frame_index = 0
+
+    def _draw_frame(self, idx):
+        coord = self.func(idx, *self.func_args, **self.func_kwargs)
+        #self.traj_data[self.current_frame_index, :] = coord
+        
+        self.line.set_data(coord[:2])
+        self.line.set_3d_properties(coord[2])
+        
+        #self.line.set_data([self.traj_data[:self.current_frame_index+1, i] for i in range(2)])
+        #self.line.set_3d_properties(self.traj_data[:self.current_frame_index+1, 2])
+        
+        #assert len(coord) == self.plot_dimension
+        #new_arrays = [np.append(arr,val) for arr, val in zip(self.line.get_data(), coord[0:2])]
+        #self.line.set_data(*new_arrays)
+        
+        #new_arrays = [np.append(arr,val) for arr, val in self.line.get_data()]
+        #new_arrays_z = np.append()
+        
+        if self.show_progress:
+            self.progress_bar.print(self.current_frame_index)
+            self.current_frame_index += 1
+
+    def new_frame_seq(self):
+        return self.frames
+
+
+
+class Animate_Trajectory_3D_Tail(Animate_Trajectory_3D):
+    def __init__(self, func, frames, tail_length=10, **kwargs):
+        super().__init__(func, frames, **kwargs)
+        
+        assert (int(tail_length) == tail_length) and (tail_length > 0)
+        self.tail_length = tail_length
+    
+    def _draw_frame(self, idx):
+        coord = self.func(idx, *self.func_args, **self.func_kwargs)
+        indice_range = None
+        if coord[0].size < self.tail_length: indice_range = np.index_exp[:]
+        else: 
+            # plot the last few(=self.tail_legnth) elements (time poins)
+            indice_range = np.index_exp[-self.tail_length:]  
+        
+        self.line.set_data([coord[i][indice_range] for i in range(2)])
+        self.line.set_3d_properties(coord[2][indice_range])
+
+
+
+
 class Animate_Text(Animate_Base):
     def __init__(self, fig, ax, func, frames, position = 'nw', func_args=(), func_kwargs={}, **fontdict):
         assert is_figure(fig) and is_axes(ax)
@@ -332,7 +423,10 @@ class Animate_Text(Animate_Base):
         fontdict = {**fontdict,**get_text_alignment(position)}
         text_position = get_text_position_in_ax_coord(ax, position)
         text_for_initialization = ''
-        self.text = ax.text(*text_position, text_for_initialization, transform=ax.transAxes, **fontdict)
+        text_method = None
+        if isinstance(ax, Axes3D): text_method = ax.text2D
+        else: text_method = ax.text
+        self.text = text_method(*text_position, text_for_initialization, transform=ax.transAxes, **fontdict)
         
         super().__init__(self.fig, blit=True)
         
@@ -376,18 +470,22 @@ class Modum_Animation(Animate_Base):
     
     def _all_elements_are_same(self, arr):
         all_are_same = True
-        for element in arr: all_are_same &= arr[0] == element
+        for element in arr: all_are_same &= np.all(arr[0] == element)
         return all_are_same
     
     def _init_draw(self):
         for ani in self.animations:
             if hasattr(ani, 'show_progress'): ani.show_progress = False
             ani._init_draw()
-        if self.show_progress: self.progress_bar = Progress_Bar(len(self.frames))
+        if self.show_progress:
+            self.progress_bar = Progress_Bar(len(self.frames))
+            self.current_frame_index = 0
     
     def _draw_frame(self, idx):
         for ani in self.animations: ani._draw_frame(idx)
-        if self.show_progress: self.progress_bar.print(idx)
+        if self.show_progress:
+            self.progress_bar.print(self.current_frame_index)
+            self.current_frame_index += 1
     
     def new_frame_seq(self):
         return self.frames
