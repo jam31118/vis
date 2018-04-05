@@ -205,6 +205,8 @@ def get_square_axes_limits(coords, margin=0.05):
     where x_width = 0.5 * (max(x) - min(x)) (and so on)
     """
     #coords = [x,y,z]
+    try: coords = [np.array(coord) for coord in coords]
+    except: raise Exception("Failed to convert elements of 'coords' into numpy.array")
     lims = [(coord.min(), coord.max()) for coord in coords]
     mids = [0.5 * (lim[0] + lim[1]) for lim in lims]
     widths = [0.5 * (lim[1] - lim[0]) for lim in lims]

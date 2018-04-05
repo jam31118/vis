@@ -286,13 +286,17 @@ class Animate_Trajectory_2D(Animate_Base):
         super().__init__(self.fig, blit=True)
         
     def _init_draw(self):
-        if self.show_progress: self.progress_bar = Progress_Bar(self.num_of_frames)
+        if self.show_progress: 
+            self.progress_bar = Progress_Bar(self.num_of_frames)
+            self.current_frame_index = 0
     
     def _draw_frame(self, idx):
         coord = self.func(idx, **self.func_args)
         new_arrays = [np.append(arr,val) for arr, val in zip(self.line.get_data(), coord)]
         self.line.set_data(*new_arrays)
-        if self.show_progress: self.progress_bar.print(idx)
+        if self.show_progress:
+            self.progress_bar.print(self.current_frame_index)
+            self.current_frame_index += 1
 
     def new_frame_seq(self):
         ## exclude the first frame
@@ -319,7 +323,9 @@ class Animate_Trajectory_2D_Tail(Animate_Trajectory_2D):
         #new_arrays = [np.append(arr,val) for arr, val in zip(self.line.get_data(), coord)]
         self.line.set_data(*new_arrays)
         #print("idx: %d / data: ",new_arrays, end='\n\n')
-        if self.show_progress: self.progress_bar.print(idx)
+        if self.show_progress:
+            self.progress_bar.print(self.current_frame_index)
+            self.current_frame_index += 1
 
 
 
