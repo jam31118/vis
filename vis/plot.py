@@ -218,6 +218,25 @@ def get_square_axes_limits(coords, margin=0.05):
 
 
 
+
+def set_square_limits_3D(ax, xlim=None, ylim=None, zlim=None, scale=1.0):
+    lims = [xlim, ylim, zlim]
+    if None in lims:
+        lims = [ax.get_xlim(), ax.get_ylim(), ax.get_zlim()]
+    mins, maxs = ([lim[idx] for lim in lims] for idx in range(2))
+    widths = [lim[1] - lim[0] for lim in lims]
+    mids = [(lim[0] + lim[1]) / 2.0 for lim in lims]
+    box_radius = max(widths) / 2 * scale
+    sq_lims = [(mid-box_radius,mid+box_radius) for mid in mids]
+    
+    ax.set_xlim(*sq_lims[0])
+    ax.set_ylim(*sq_lims[1])
+    ax.set_zlim(*sq_lims[2])
+
+
+
+
+
 def check_fig_and_ax(fig=None, ax=None, fig_kwargs={}, ax_kwargs={}):
     for arg in [fig_kwargs, ax_kwargs]: assert type(arg) is dict
     if ax is not None:
