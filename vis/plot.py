@@ -60,6 +60,29 @@ def construct_polar_mesh_for_colormesh(r_values, theta_values):
     return mesh_X, mesh_Y
 
 
+
+def construct_mesh_for_1d_array(x_values):
+    """Construct the corresponding 1D mesh from 1D array for pcolormesh() in ```matplotlib```"""
+    
+    if not isinstance(x_values, np.ndarray):
+        try: x_values = np.array(x_values)
+        except: raise TypeError("Can not convert to numpy.ndarray: {0}".format(x_values))
+    else: assert (x_values.ndim == 1) and (x_values.size >= 2)
+    
+    x_mid_points = 0.5 * (x_values[1:] + x_values[:-1])
+
+    x_min_point = x_values[0] - (x_mid_points[0] - x_values[0])
+    x_max_point = x_values[-1] + (x_values[-1] - x_mid_points[-1])
+
+    x_mesh_values = np.empty((len(x_values)+1,), dtype=float)
+    x_mesh_values[0] = x_min_point
+    x_mesh_values[-1] = x_max_point
+    x_mesh_values[1:-1] = x_mid_points
+    
+    return x_mesh_values
+
+
+
 def set_global_fontsize_from_fig(fig, scale=1.5):
     """
     Set matplotlib.rcParams['font.size'] value so that
