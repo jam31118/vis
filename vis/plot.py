@@ -63,12 +63,12 @@ def construct_polar_mesh_for_colormesh(r_values, theta_values):
 
 def construct_mesh_for_1d_array(x_values):
     """Construct the corresponding 1D mesh from 1D array for pcolormesh() in ```matplotlib```"""
-    
+
     if not isinstance(x_values, np.ndarray):
         try: x_values = np.array(x_values)
         except: raise TypeError("Can not convert to numpy.ndarray: {0}".format(x_values))
     else: assert (x_values.ndim == 1) and (x_values.size >= 2)
-    
+
     x_mid_points = 0.5 * (x_values[1:] + x_values[:-1])
 
     x_min_point = x_values[0] - (x_mid_points[0] - x_values[0])
@@ -78,9 +78,15 @@ def construct_mesh_for_1d_array(x_values):
     x_mesh_values[0] = x_min_point
     x_mesh_values[-1] = x_max_point
     x_mesh_values[1:-1] = x_mid_points
-    
+
     return x_mesh_values
 
+
+def construct_catesian_mesh_for_pcolormesh(x_grid_values, y_grid_values):
+    x_mesh_values = construct_mesh_for_1d_array(x_grid_values)
+    y_mesh_values = construct_mesh_for_1d_array(y_grid_values)
+    mesh_X, mesh_Y = np.meshgrid(x_mesh_values, y_mesh_values, indexing='ij')
+    return mesh_X, mesh_Y
 
 
 def set_global_fontsize_from_fig(fig, scale=1.5):
@@ -202,29 +208,29 @@ def get_ylim(data):
 
 def get_square_axes_limits(coords, margin=0.05):
     """Return N-dimensional square's limits
-    
+
     ## Arguments
     # 'coords': list of coordinates of poins to be plotted
     # 'margin': margin to be added from boundaries of the square.
     - 'margin' can be negative if one wants to reduce the square size.
-    
+
     ## Example
     if 'coords' was given as [x,y,z],
-    
+
     then the resulting square's limits are given by:
-    
+
     (xlim, ylim, zlim)
-    
+
     where,
-    
+
     xlim == (x_mid - max_width, x_mid + max_width)
     ylim == (y_mid - max_width, y_mid + max_width)
     zlim == (z_mid - max_width, z_mid + max_width)
-    
+
     x_mid = 0.5 * (min(x) + max(x)) (and so on)
-    
+
     max_width = max([x_width, y_width, z_width])
-    
+
     where x_width = 0.5 * (max(x) - min(x)) (and so on)
     """
     #coords = [x,y,z]
@@ -251,7 +257,7 @@ def set_square_limits_3D(ax, xlim=None, ylim=None, zlim=None, scale=1.0):
     mids = [(lim[0] + lim[1]) / 2.0 for lim in lims]
     box_radius = max(widths) / 2 * scale
     sq_lims = [(mid-box_radius,mid+box_radius) for mid in mids]
-    
+
     ax.set_xlim(*sq_lims[0])
     ax.set_ylim(*sq_lims[1])
     ax.set_zlim(*sq_lims[2])
@@ -264,7 +270,7 @@ def check_fig_and_ax(fig=None, ax=None, fig_kwargs={}, ax_kwargs={}):
     for arg in [fig_kwargs, ax_kwargs]: assert type(arg) is dict
     if ax is not None:
         assert is_axes(ax)
-        if fig is not None: 
+        if fig is not None:
             assert is_figure(fig)
             assert ax in fig.axes
         else: fig = ax.figure
@@ -272,14 +278,14 @@ def check_fig_and_ax(fig=None, ax=None, fig_kwargs={}, ax_kwargs={}):
         if fig is not None: assert len(fig.axes) == 0
         else: fig = plt.figure(**fig_kwargs)
         ax = fig.gca(**ax_kwargs)
-    
+
     return fig, ax
 
 
 
 
 def plot_1D(x, y, *input_plot_args, fig=None, ax=None, xlabel='', ylabel='', xlim=None, ylim=None, title='',
-            figsize=None, mathtext_fontset='stix', font_size_scale=2.0, ax_color=None, 
+            figsize=None, mathtext_fontset='stix', font_size_scale=2.0, ax_color=None,
             log_scale=False, **input_plot_kwargs):
 
     ## Process input arguments
@@ -339,9 +345,9 @@ def plot_1D(x, y, *input_plot_args, fig=None, ax=None, xlabel='', ylabel='', xli
 
     # values in 'ax_plot_kwargs' will be overided by 'input_plot_kwargs' if there's any collision
     plot_kwargs = {**ax_plot_kwargs, **input_plot_kwargs}
-    
+
     #print('x',x,'y',y)
-    
+
     line = None
     if log_scale: line, = ax.semilogy(x,y, *input_plot_args, **plot_kwargs)
     else: line, = ax.plot(x, y, *input_plot_args, **plot_kwargs)
@@ -468,5 +474,3 @@ def plot_2D(X_mesh, Y_mesh, C=None, fig=None, ax=None, xlabel='', ylabel='', col
     cb.set_label(color_label, fontsize='xx-large', rotation=270, va='bottom')
 
     return fig, ax, pcm
-
-
