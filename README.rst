@@ -1,5 +1,0 @@
-vis
-===
-
-Simple visualization tools
-
