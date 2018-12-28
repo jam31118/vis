@@ -82,10 +82,10 @@ def construct_mesh_for_1d_array(x_values):
     return x_mesh_values
 
 
-def construct_catesian_mesh_for_pcolormesh(x_grid_values, y_grid_values):
+def construct_catesian_mesh_for_pcolormesh(x_grid_values, y_grid_values, indexing='ij'):
     x_mesh_values = construct_mesh_for_1d_array(x_grid_values)
     y_mesh_values = construct_mesh_for_1d_array(y_grid_values)
-    mesh_X, mesh_Y = np.meshgrid(x_mesh_values, y_mesh_values, indexing='ij')
+    mesh_X, mesh_Y = np.meshgrid(x_mesh_values, y_mesh_values, indexing=indexing)
     return mesh_X, mesh_Y
 
 
