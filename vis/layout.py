@@ -56,7 +56,7 @@ def get_text_alignment(pos):
     return {'va':va, 'ha':ha}
 
 
-def get_text_position_and_inner_alignment(ax, pos, scale=default_text_relative_padding):
+def get_text_position_and_inner_alignment(ax, pos, scale=default_text_relative_padding, with_transAxes_kwargs=True):
     """Return text position and its alignment in its bounding box.
     
     The returned position is given in Axes coordinate,
@@ -67,6 +67,7 @@ def get_text_position_and_inner_alignment(ax, pos, scale=default_text_relative_p
     """
     xy = get_text_position_in_ax_coord(ax,pos,scale=scale)
     alignment_fontdict = get_text_alignment(pos)
+    if with_transAxes_kwargs: alignment_fontdict = {**alignment_fontdict, **{'transform':ax.transAxes}}
     return xy, alignment_fontdict
 
 
